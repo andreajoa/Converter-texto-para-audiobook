@@ -1,4 +1,4 @@
-# Copyright 2020 The HuggingFace Team. All rights reserved.
+# Copyright 2022 The HuggingFace Team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,3 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import torch
+
+from accelerate.utils import is_xpu_available
+
+
+def main():
+    accelerator_type = "GPU"
+    num_accelerators = 0
+    if torch.cuda.is_available():
+        num_accelerators = torch.cuda.device_count()
+        accelerator_type = "GPU"
+    elif is_xpu_available():
+        num_accelerators = torch.xpu.device_count()
+        accelerator_type = "XPU"
+    print(f"Successfully ran on {num_accelerators} {accelerator_type}s")
+
+
+if __name__ == "__main__":
+    main()
