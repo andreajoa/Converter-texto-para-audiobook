@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversor de Texto para Audiobook</title>
+    <title>🎧 Conversor de Texto para Audiobook</title>
     <style>
         * {
             margin: 0;
@@ -19,116 +19,189 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 40px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            overflow: hidden;
         }
 
-        h1 {
+        .header {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 30px;
             text-align: center;
-            color: #333;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
             margin-bottom: 10px;
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 40px;
-            font-size: 1.1em;
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #6366f1;
+            border-bottom: 3px solid #6366f1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .form-group {
             margin-bottom: 25px;
         }
 
-        label {
+        .form-label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #333;
-            font-size: 1.1em;
+            color: #374151;
+            font-size: 1rem;
         }
 
-        input[type="file"] {
+        .form-input, .form-select, .form-textarea {
             width: 100%;
-            padding: 15px;
-            border: 2px dashed #667eea;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
             border-radius: 10px;
-            background: #f8f9ff;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        input[type="file"]:hover {
-            border-color: #764ba2;
-            background: #f0f2ff;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
             font-family: inherit;
-            font-size: 14px;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 150px;
             resize: vertical;
-            min-height: 200px;
-            transition: border-color 0.3s ease;
         }
 
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
-        }
-
-        select {
+        .file-upload {
+            position: relative;
+            display: inline-block;
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-family: inherit;
-            font-size: 14px;
-            background: white;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
             cursor: pointer;
         }
 
-        select:focus {
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            border: 3px dashed #d1d5db;
+            border-radius: 10px;
+            background: #f9fafb;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .file-label:hover {
+            border-color: #6366f1;
+            background: #f0f0ff;
+        }
+
+        .file-label.dragover {
+            border-color: #6366f1;
+            background: #f0f0ff;
+            transform: scale(1.02);
+        }
+
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .range-input {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: #e5e7eb;
             outline: none;
-            border-color: #667eea;
+            -webkit-appearance: none;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+        }
+
+        .range-value {
+            min-width: 60px;
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
         }
 
         .btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 16px;
+            padding: 16px 32px;
+            border-radius: 10px;
+            font-size: 1.1rem;
             font-weight: 600;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            transition: all 0.3s;
             width: 100%;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
         }
 
         .btn:disabled {
@@ -137,278 +210,588 @@
             transform: none;
         }
 
-        .progress-container {
-            margin-top: 20px;
-            display: none;
+        .btn-loading {
+            color: transparent;
         }
 
-        .progress-bar {
-            width: 100%;
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
             height: 20px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
             display: none;
         }
 
-        .status.success {
-            background: #e8f5e8;
-            color: #2d5d31;
-            border: 1px solid #4caf50;
+        .result.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
         }
 
-        .status.error {
-            background: #ffeaea;
-            color: #d32f2f;
-            border: 1px solid #f44336;
+        .result.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
         }
 
-        .audio-player {
-            margin-top: 20px;
-            display: none;
+        .result h3 {
+            margin-bottom: 15px;
         }
 
-        audio {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .file-info {
-            background: #f8f9ff;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .options-grid {
+        .result-info {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .result-item strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .download-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-offline {
+            background: #ef4444;
+            color: white;
+        }
+
+        .supported-formats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .format-tag {
+            background: #6366f1;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
+        .voice-info {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-top: 5px;
         }
 
         @media (max-width: 768px) {
-            .options-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
                 padding: 20px;
             }
-            
-            h1 {
-                font-size: 2em;
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .result-info {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎧 Conversor de Texto para Audiobook</h1>
-        <p class="subtitle">Transforme seus textos em audiolivros com qualidade profissional</p>
+        <div class="status-indicator" id="statusIndicator">🔄 Verificando...</div>
         
-        <form id="converterForm">
-            <div class="form-group">
-                <label for="textFile">📁 Carregar arquivo de texto (.txt):</label>
-                <input type="file" id="textFile" accept=".txt" onchange="handleFileSelect(this)">
-                <div class="file-info" id="fileInfo"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="textInput">✏️ Ou digite/cole seu texto aqui:</label>
-                <textarea id="textInput" placeholder="Cole seu texto aqui ou carregue um arquivo acima..."></textarea>
-            </div>
-
-            <div class="options-grid">
-                <div class="form-group">
-                    <label for="voiceSelect">🎤 Escolha a voz:</label>
-                    <select id="voiceSelect">
-                        <option value="pt-BR-FranciscaNeural">Francisca (Feminina - BR)</option>
-                        <option value="pt-BR-AntonioNeural">Antonio (Masculina - BR)</option>
-                        <option value="pt-BR-BrendaNeural">Brenda (Feminina - BR)</option>
-                        <option value="pt-BR-DonatoNeural">Donato (Masculina - BR)</option>
-                        <option value="pt-BR-ElzaNeural">Elza (Feminina - BR)</option>
-                        <option value="pt-BR-FabioNeural">Fabio (Masculina - BR)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="speedSelect">⚡ Velocidade da fala:</label>
-                    <select id="speedSelect">
-                        <option value="0.8">Lenta</option>
-                        <option value="1.0" selected>Normal</option>
-                        <option value="1.2">Rápida</option>
-                        <option value="1.5">Muito Rápida</option>
-                    </select>
-                </div>
-            </div>
-
-            <button type="submit" class="btn" id="convertBtn">
-                🎵 Converter para Audiobook
-            </button>
-        </form>
-
-        <div class="progress-container" id="progressContainer">
-            <p>Processando... Por favor, aguarde.</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
+        <div class="header">
+            <h1>🎧 Conversor para Audiobook</h1>
+            <p>Transforme seus textos e documentos em audiobooks profissionais</p>
         </div>
 
-        <div class="status" id="statusMessage"></div>
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('text')">📝 Texto</button>
+                <button class="tab" onclick="switchTab('file')">📄 Arquivo</button>
+            </div>
 
-        <div class="audio-player" id="audioPlayer">
-            <h3>🎧 Seu audiobook está pronto!</h3>
-            <audio controls id="audioElement">
-                Seu navegador não suporta o elemento de áudio.
-            </audio>
-            <button class="btn" onclick="downloadAudio()" style="margin-top: 15px;">
-                💾 Baixar Audiobook
-            </button>
+            <!-- Aba de Texto -->
+            <div class="tab-content active" id="textTab">
+                <form id="textForm">
+                    <div class="form-group">
+                        <label class="form-label" for="textInput">Cole seu texto aqui:</label>
+                        <textarea class="form-textarea" id="textInput" placeholder="Digite ou cole o texto que deseja converter em audiobook..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="voiceSelect">Selecione a voz:</label>
+                        <select class="form-select" id="voiceSelect">
+                            <option value="">Carregando vozes...</option>
+                        </select>
+                        <div class="voice-info" id="voiceInfo"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="speedRange">Velocidade da fala:</label>
+                        <div class="range-container">
+                            <input type="range" class="range-input" id="speedRange" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <div class="range-value" id="speedValue">1.0x</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" id="convertTextBtn">
+                        🎤 Converter Texto para Audiobook
+                    </button>
+                </form>
+            </div>
+
+            <!-- Aba de Arquivo -->
+            <div class="tab-content" id="fileTab">
+                <form id="fileForm">
+                    <div class="form-group">
+                        <label class="form-label">Envie seu arquivo:</label>
+                        <div class="file-upload">
+                            <input type="file" class="file-input" id="fileInput" accept=".txt,.pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.rtf">
+                            <label class="file-label" for="fileInput" id="fileLabel">
+                                <div>
+                                    <div style="font-size: 3rem; margin-bottom: 15px;">📁</div>
+                                    <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 10px;">
+                                        Clique para selecionar ou arraste um arquivo
+                                    </div>
+                                    <div style="font-size: 0.9rem; color: #6b7280;">
+                                        Formatos suportados:
+                                    </div>
+                                    <div class="supported-formats">
+                                        <span class="format-tag">TXT</span>
+                                        <span class="format-tag">PDF</span>
+                                        <span class="format-tag">DOCX</span>
+                                        <span class="format-tag">XLSX</span>
+                                        <span class="format-tag">PPTX</span>
+                                        <span class="format-tag">RTF</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="fileInfo" style="margin-top: 15px; display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="fileVoiceSelect">Selecione a voz:</label>
+                        <select class="form-select" id="fileVoiceSelect">
+                            <option value="">Carregando vozes...</option>
+                        </select>
+                        <div class="voice-info" id="fileVoiceInfo"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="fileSpeedRange">Velocidade da fala:</label>
+                        <div class="range-container">
+                            <input type="range" class="range-input" id="fileSpeedRange" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <div class="range-value" id="fileSpeedValue">1.0x</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" id="convertFileBtn">
+                        🎤 Converter Arquivo para Audiobook
+                    </button>
+                </form>
+            </div>
+
+            <!-- Resultado -->
+            <div class="result" id="result">
+                <h3 id="resultTitle"></h3>
+                <div id="resultContent"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        let currentAudioUrl = null;
+        // Variáveis globais
+        let voices = {};
+        let apiStatus = false;
 
-        function handleFileSelect(input) {
-            const file = input.files[0];
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            checkApiStatus();
+            loadVoices();
+            setupEventListeners();
+        });
+
+        // Verificar status da API
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                if (data.status === 'online') {
+                    updateStatusIndicator('online', `✅ Online - ${data.tts_engine?.toUpperCase()}`);
+                    apiStatus = true;
+                } else {
+                    updateStatusIndicator('offline', '❌ Offline');
+                }
+                
+                console.log('Status da API:', data);
+            } catch (error) {
+                updateStatusIndicator('offline', '❌ Erro de conexão');
+                console.error('Erro ao verificar status:', error);
+            }
+        }
+
+        // Atualizar indicador de status
+        function updateStatusIndicator(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            indicator.textContent = text;
+            indicator.className = `status-indicator status-${status}`;
+        }
+
+        // Carregar vozes disponíveis
+        async function loadVoices() {
+            try {
+                const response = await fetch('http://localhost:5000/voices');
+                const data = await response.json();
+                voices = data.voices || {};
+                
+                populateVoiceSelects();
+            } catch (error) {
+                console.error('Erro ao carregar vozes:', error);
+            }
+        }
+
+        // Popular selects de voz
+        function populateVoiceSelects() {
+            const selects = ['voiceSelect', 'fileVoiceSelect'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '';
+                
+                if (Object.keys(voices).length === 0) {
+                    select.innerHTML = '<option value="">Nenhuma voz disponível</option>';
+                    return;
+                }
+                
+                Object.entries(voices).forEach(([voiceId, voiceData]) => {
+                    const option = document.createElement('option');
+                    option.value = voiceId;
+                    option.textContent = voiceData.name;
+                    select.appendChild(option);
+                });
+                
+                // Selecionar primeira voz por padrão
+                if (select.children.length > 0) {
+                    select.selectedIndex = 0;
+                    updateVoiceInfo(selectId);
+                }
+            });
+        }
+
+        // Atualizar informações da voz
+        function updateVoiceInfo(selectId) {
+            const select = document.getElementById(selectId);
+            const infoId = selectId.replace('Select', 'Info');
+            const info = document.getElementById(infoId);
+            
+            const selectedVoice = voices[select.value];
+            if (selectedVoice) {
+                info.textContent = `${selectedVoice.gender} • ${selectedVoice.country}`;
+            } else {
+                info.textContent = '';
+            }
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Mudança de abas
+            const speedRange = document.getElementById('speedRange');
+            const speedValue = document.getElementById('speedValue');
+            const fileSpeedRange = document.getElementById('fileSpeedRange');
+            const fileSpeedValue = document.getElementById('fileSpeedValue');
+
+            speedRange.addEventListener('input', () => {
+                speedValue.textContent = speedRange.value + 'x';
+            });
+
+            fileSpeedRange.addEventListener('input', () => {
+                fileSpeedValue.textContent = fileSpeedRange.value + 'x';
+            });
+
+            // Voice selects
+            document.getElementById('voiceSelect').addEventListener('change', () => {
+                updateVoiceInfo('voiceSelect');
+            });
+
+            document.getElementById('fileVoiceSelect').addEventListener('change', () => {
+                updateVoiceInfo('fileVoiceSelect');
+            });
+
+            // File upload
+            const fileInput = document.getElementById('fileInput');
+            const fileLabel = document.getElementById('fileLabel');
+            const fileInfo = document.getElementById('fileInfo');
+
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop
+            fileLabel.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileLabel.classList.add('dragover');
+            });
+
+            fileLabel.addEventListener('dragleave', () => {
+                fileLabel.classList.remove('dragover');
+            });
+
+            fileLabel.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileLabel.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelect();
+                }
+            });
+
+            // Forms
+            document.getElementById('textForm').addEventListener('submit', handleTextSubmit);
+            document.getElementById('fileForm').addEventListener('submit', handleFileSubmit);
+        }
+
+        // Alternar abas
+        function switchTab(tabName) {
+            // Atualizar botões
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Atualizar conteúdo
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // Esconder resultado
+            hideResult();
+        }
+
+        // Lidar com seleção de arquivo
+        function handleFileSelect() {
+            const fileInput = document.getElementById('fileInput');
             const fileInfo = document.getElementById('fileInfo');
             
-            if (file) {
-                fileInfo.style.display = 'block';
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
                 fileInfo.innerHTML = `
-                    <strong>Arquivo selecionado:</strong> ${file.name}<br>
-                    <strong>Tamanho:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
-                    <strong>Tipo:</strong> ${file.type || 'text/plain'}
+                    <div style="padding: 15px; background: #f3f4f6; border-radius: 10px;">
+                        <strong>📄 ${file.name}</strong><br>
+                        <span style="color: #6b7280;">Tamanho: ${formatFileSize(file.size)} • Tipo: ${file.type || 'Desconhecido'}</span>
+                    </div>
                 `;
-                
-                // Ler o conteúdo do arquivo
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('textInput').value = e.target.result;
-                };
-                reader.readAsText(file);
+                fileInfo.style.display = 'block';
             } else {
                 fileInfo.style.display = 'none';
             }
         }
 
-        function showStatus(message, type) {
-            const statusElement = document.getElementById('statusMessage');
-            statusElement.textContent = message;
-            statusElement.className = `status ${type}`;
-            statusElement.style.display = 'block';
-            
-            setTimeout(() => {
-                statusElement.style.display = 'none';
-            }, 5000);
+        // Formatar tamanho do arquivo
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        function updateProgress(percent) {
-            const progressFill = document.getElementById('progressFill');
-            progressFill.style.width = percent + '%';
-        }
-
-        async function convertToAudio(text, voice, speed) {
-            // Simulação de conversão - aqui você integraria com seu backend Python
-            return new Promise((resolve, reject) => {
-                // Simular progresso
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += Math.random() * 20;
-                    updateProgress(Math.min(progress, 90));
-                    
-                    if (progress >= 90) {
-                        clearInterval(interval);
-                        updateProgress(100);
-                        
-                        // Simular conclusão após 2 segundos
-                        setTimeout(() => {
-                            // Em um projeto real, você faria uma chamada para seu backend
-                            // Por exemplo: fetch('/convert', { method: 'POST', body: formData })
-                            resolve('audio_resultado.wav');
-                        }, 2000);
-                    }
-                }, 500);
-            });
-        }
-
-        document.getElementById('converterForm').addEventListener('submit', async function(e) {
+        // Lidar com envio de texto
+        async function handleTextSubmit(e) {
             e.preventDefault();
             
-            const textInput = document.getElementById('textInput').value.trim();
+            const text = document.getElementById('textInput').value.trim();
             const voice = document.getElementById('voiceSelect').value;
-            const speed = document.getElementById('speedSelect').value;
-            const convertBtn = document.getElementById('convertBtn');
-            const progressContainer = document.getElementById('progressContainer');
-            
-            if (!textInput) {
-                showStatus('Por favor, insira algum texto ou carregue um arquivo.', 'error');
+            const speed = document.getElementById('speedRange').value;
+
+            if (!text) {
+                showResult('error', 'Erro', 'Por favor, digite um texto para converter.');
                 return;
             }
-            
-            // Desabilitar botão e mostrar progresso
-            convertBtn.disabled = true;
-            convertBtn.textContent = '🔄 Convertendo...';
-            progressContainer.style.display = 'block';
-            updateProgress(0);
-            
-            try {
-                // Chamar função de conversão
-                const audioFile = await convertToAudio(textInput, voice, speed);
-                
-                showStatus('Conversão concluída com sucesso!', 'success');
-                
-                // Mostrar player de áudio (simulado)
-                const audioPlayer = document.getElementById('audioPlayer');
-                audioPlayer.style.display = 'block';
-                
-                // Em um projeto real, você definiria a URL do arquivo gerado
-                // currentAudioUrl = audioFile;
-                
-            } catch (error) {
-                console.error('Erro na conversão:', error);
-                showStatus('Erro durante a conversão. Tente novamente.', 'error');
-            } finally {
-                // Reabilitar botão
-                convertBtn.disabled = false;
-                convertBtn.textContent = '🎵 Converter para Audiobook';
-                progressContainer.style.display = 'none';
-            }
-        });
 
-        function downloadAudio() {
-            if (currentAudioUrl) {
-                const a = document.createElement('a');
-                a.href = currentAudioUrl;
-                a.download = 'audiobook.wav';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } else {
-                showStatus('Nenhum arquivo de áudio disponível para download.', 'error');
+            await convertToAudio({ text, voice, speed }, 'convertTextBtn');
+        }
+
+        // Lidar com envio de arquivo
+        async function handleFileSubmit(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const voice = document.getElementById('fileVoiceSelect').value;
+            const speed = document.getElementById('fileSpeedRange').value;
+
+            if (!fileInput.files.length) {
+                showResult('error', 'Erro', 'Por favor, selecione um arquivo para converter.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('voice', voice);
+            formData.append('speed', speed);
+
+            await convertToAudio(formData, 'convertFileBtn', true);
+        }
+
+        // Converter para áudio
+        async function convertToAudio(data, buttonId, isFile = false) {
+            const button = document.getElementById(buttonId);
+            
+            // Mostrar loading
+            button.disabled = true;
+            button.classList.add('btn-loading');
+            hideResult();
+
+            try {
+                const options = {
+                    method: 'POST'
+                };
+
+                if (isFile) {
+                    options.body = data;
+                } else {
+                    options.headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch('/convert', options);
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccessResult(result);
+                } else {
+                    showResult('error', 'Erro na Conversão', result.error || 'Erro desconhecido');
+                }
+
+            } catch (error) {
+                showResult('error', 'Erro de Conexão', 'Não foi possível conectar com o servidor.');
+                console.error('Erro:', error);
+            } finally {
+                // Remover loading
+                button.disabled = false;
+                button.classList.remove('btn-loading');
             }
         }
 
-        // Verificar se a página carregou corretamente
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Interface do conversor carregada com sucesso!');
-            showStatus('Interface carregada! Pronto para converter textos em audiobooks.', 'success');
-        });
+        // Mostrar resultado de sucesso
+        function showSuccessResult(data) {
+            const content = `
+                <div class="result-info">
+                    <div class="result-item">
+                        <strong>📁 Arquivo:</strong>
+                        ${data.filename}
+                    </div>
+                    <div class="result-item">
+                        <strong>📊 Tamanho:</strong>
+                        ${formatFileSize(data.file_size)}
+                    </div>
+                    <div class="result-item">
+                        <strong>📝 Caracteres:</strong>
+                        ${data.text_length.toLocaleString()}
+                    </div>
+                    <div class="result-item">
+                        <strong>🎤 Voz:</strong>
+                        ${voices[data.voice]?.name || data.voice}
+                    </div>
+                    <div class="result-item">
+                        <strong>🔧 Engine:</strong>
+                        ${data.engine?.toUpperCase()}
+                    </div>
+                </div>
+                <a href="/download/${data.file_id}" class="download-btn" download>
+                    📥 Baixar Audiobook
+                </a>
+            `;
+
+            showResult('success', '✅ Audiobook Criado com Sucesso!', content);
+        }
+
+        // Mostrar resultado
+        function showResult(type, title, content) {
+            const result = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+
+            result.className = `result ${type}`;
+            resultTitle.textContent = title;
+            resultContent.innerHTML = content;
+            result.style.display = 'block';
+
+            // Scroll para o resultado
+            result.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Esconder resultado
+        function hideResult() {
+            document.getElementById('result').style.display = 'none';
+        }
     </script>
 </body>
 </html>
