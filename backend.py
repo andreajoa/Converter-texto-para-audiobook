@@ -77,7 +77,9 @@ def extract_text_from_file(file_path, filename):
             with open(file_path, 'rb') as file:
                 pdf_reader = PyPDF2.PdfReader(file)
                 for page in pdf_reader.pages:
-                    text += page.extract_text() + "\n"
+                    t = page.extract_text()
+                    if t:
+                        text += t + "\n"
         
         elif file_extension in ['docx', 'doc'] and DOCX_AVAILABLE:
             doc = Document(file_path)
@@ -129,15 +131,20 @@ def convert_text_to_speech(text, voice, speed, file_path):
             audio_parts.append(AudioSegment.from_mp3(part_file))
         
         # Concatenar os arquivos de áudio
-        combined_audio = sum(audio_parts)
+        combined_audio = audio_parts[0]
+        for audio in audio_parts[1:]:
+            combined_audio += audio
         
         # Salvar o arquivo de áudio final
         combined_audio.export(file_path, format="mp3")
         
         # Limpar os arquivos de áudio parciais
-        for part_file in os.listdir(TEMP_DIR):
-            if part_file.startswith("part_"):
-                os.remove(os.path.join(TEMP_DIR, part_file))
+        for file in os.listdir(TEMP_DIR):
+            if file.startswith("part_") and file.endswith(".mp3"):
+                try:
+                    os.remove(os.path.join(TEMP_DIR, file))
+                except:
+                    pass
 
         return True
         
@@ -299,4 +306,5 @@ if __name__ == '__main__':
     print("\n📋 Para instalar as dependências:")
     print("pip install flask flask-cors PyPDF2 python-docx openpyxl python-pptx gtts pydub")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
