@@ -6,6 +6,8 @@ import uuid
 from datetime import datetime
 import logging
 from werkzeug.utils import secure_filename
+from gtts import gTTS
+from pydub import AudioSegment
 
 # Bibliotecas para leitura de diferentes formatos
 try:
@@ -33,40 +35,6 @@ try:
 except ImportError:
     PPTX_AVAILABLE = False
 
-# Para text-to-speech - múltiplas opções
-TTS_ENGINE = None
-TTS_TYPE = None
-
-# Tentar Azure Cognitive Services (melhor qualidade)
-try:
-    import azure.cognitiveservices.speech as speechsdk
-    TTS_ENGINE = 'azure'
-    TTS_TYPE = 'azure'
-    AZURE_AVAILABLE = True
-except ImportError:
-    AZURE_AVAILABLE = False
-
-# Fallback para pyttsx3
-if not TTS_ENGINE:
-    try:
-        import pyttsx3
-        TTS_ENGINE = 'pyttsx3'
-        TTS_TYPE = 'local'
-        PYTTSX3_AVAILABLE = True
-    except ImportError:
-        PYTTSX3_AVAILABLE = False
-
-# Fallback para gTTS (Google Text-to-Speech)
-if not TTS_ENGINE:
-    try:
-        from gtts import gTTS
-        import pygame
-        TTS_ENGINE = 'gtts'
-        TTS_TYPE = 'online'
-        GTTS_AVAILABLE = True
-    except ImportError:
-        GTTS_AVAILABLE = False
-
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -84,31 +52,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'rtf'}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
-# Vozes disponíveis por engine
+# Vozes disponíveis para gTTS (focando em pt-BR)
 VOICES_CONFIG = {
-    'azure': {
-        'pt-BR-FranciscaNeural': {'name': 'Francisca (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'},
-        'pt-BR-AntonioNeural': {'name': 'Antonio (Masculina - BR)', 'gender': 'Male', 'country': 'Brasil'},
-        'pt-BR-BrendaNeural': {'name': 'Brenda (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'},
-        'pt-BR-DonatoNeural': {'name': 'Donato (Masculina - BR)', 'gender': 'Male', 'country': 'Brasil'},
-        'pt-BR-ElzaNeural': {'name': 'Elza (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'},
-        'pt-BR-FabioNeural': {'name': 'Fabio (Masculina - BR)', 'gender': 'Male', 'country': 'Brasil'},
-        'pt-BR-GiovannaNeural': {'name': 'Giovanna (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'},
-        'pt-BR-HumbertoNeural': {'name': 'Humberto (Masculina - BR)', 'gender': 'Male', 'country': 'Brasil'},
-        'pt-BR-JulioNeural': {'name': 'Julio (Masculina - BR)', 'gender': 'Male', 'country': 'Brasil'},
-        'pt-BR-LeilaNeural': {'name': 'Leila (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'},
-        'pt-BR-LeticiaNeural': {'name': 'Leticia (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'},
-        'pt-BR-ManuelaNeural': {'name': 'Manuela (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'},
-        'pt-BR-NicolauNeural': {'name': 'Nicolau (Masculina - BR)', 'gender': 'Male', 'country': 'Brasil'},
-        'pt-BR-ValerioNeural': {'name': 'Valerio (Masculina - BR)', 'gender': 'Male', 'country': 'Brasil'},
-        'pt-BR-YaraNeural': {'name': 'Yara (Feminina - BR)', 'gender': 'Female', 'country': 'Brasil'}
-    },
     'gtts': {
-        'pt-BR': {'name': 'Google TTS Português Brasil', 'gender': 'Female', 'country': 'Brasil'},
-        'pt': {'name': 'Google TTS Português', 'gender': 'Female', 'country': 'Portugal'}
-    },
-    'pyttsx3': {
-        'default': {'name': 'Voz Padrão do Sistema', 'gender': 'Unknown', 'country': 'Sistema'}
+        'pt-BR': {'name': 'Google TTS Português Brasil (Feminina)', 'gender': 'Female', 'country': 'Brasil'},
+        'pt': {'name': 'Google TTS Português (Feminina)', 'gender': 'Female', 'country': 'Portugal'}
     }
 }
 
@@ -166,101 +114,35 @@ def extract_text_from_file(file_path, filename):
     return text.strip()
 
 def convert_text_to_speech(text, voice, speed, file_path):
-    """Converter texto para fala usando diferentes engines"""
-    
-    if TTS_ENGINE == 'azure' and AZURE_AVAILABLE:
-        return convert_with_azure(text, voice, speed, file_path)
-    elif TTS_ENGINE == 'gtts' and GTTS_AVAILABLE:
-        return convert_with_gtts(text, voice, speed, file_path)
-    elif TTS_ENGINE == 'pyttsx3' and PYTTSX3_AVAILABLE:
-        return convert_with_pyttsx3(text, voice, speed, file_path)
-    else:
-        raise Exception("Nenhum engine TTS disponível")
-
-def convert_with_azure(text, voice, speed, file_path):
-    """Converter usando Azure Speech Services"""
-    try:
-        # Configurar Azure Speech (você precisa definir sua chave e região)
-        speech_key = os.environ.get('AZURE_SPEECH_KEY', 'YOUR_AZURE_KEY')
-        service_region = os.environ.get('AZURE_SPEECH_REGION', 'eastus')
-        
-        speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-        speech_config.speech_synthesis_voice_name = voice
-        speech_config.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3)
-        
-        # Rate adjustment for Azure
-        rate_percent = int((speed - 1.0) * 100)
-        if rate_percent != 0:
-            rate_adjustment = f"{rate_percent:+d}%"
-        else:
-            rate_adjustment = "0%"
-        
-        ssml = f"""
-        <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="pt-BR">
-            <voice name="{voice}">
-                <prosody rate="{rate_adjustment}">
-                    {text}
-                </prosody>
-            </voice>
-        </speak>
-        """
-        
-        synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-        result = synthesizer.speak_ssml_async(ssml).get()
-        
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            with open(file_path, 'wb') as audio_file:
-                audio_file.write(result.audio_data)
-            return True
-        else:
-            logger.error(f"Azure TTS error: {result.reason}")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Erro Azure TTS: {str(e)}")
-        return False
-
-def convert_with_gtts(text, voice, speed, file_path):
-    """Converter usando Google Text-to-Speech"""
+    """Converter texto para fala usando gTTS, com suporte a textos longos"""
     try:
         lang = voice if voice in ['pt-BR', 'pt'] else 'pt-BR'
-        tts = gTTS(text=text, lang=lang, slow=(speed < 0.8))
+        # Dividir o texto em blocos de 4500 caracteres para evitar o limite do gTTS
+        text_parts = [text[i:i+4500] for i in range(0, len(text), 4500)]
         
-        # gTTS gera MP3, converter nome do arquivo
-        mp3_path = file_path.replace('.wav', '.mp3')
-        tts.save(mp3_path)
+        # Gerar um arquivo de áudio para cada parte do texto
+        audio_parts = []
+        for i, part in enumerate(text_parts):
+            part_file = os.path.join(TEMP_DIR, f"part_{i}.mp3")
+            tts = gTTS(text=part, lang=lang, slow=(speed < 0.8))
+            tts.save(part_file)
+            audio_parts.append(AudioSegment.from_mp3(part_file))
         
-        # Se precisar converter para WAV, pode usar pydub aqui
+        # Concatenar os arquivos de áudio
+        combined_audio = sum(audio_parts)
+        
+        # Salvar o arquivo de áudio final
+        combined_audio.export(file_path, format="mp3")
+        
+        # Limpar os arquivos de áudio parciais
+        for part_file in os.listdir(TEMP_DIR):
+            if part_file.startswith("part_"):
+                os.remove(os.path.join(TEMP_DIR, part_file))
+
         return True
         
     except Exception as e:
         logger.error(f"Erro gTTS: {str(e)}")
-        return False
-
-def convert_with_pyttsx3(text, voice, speed, file_path):
-    """Converter usando pyttsx3"""
-    try:
-        engine = pyttsx3.init()
-        
-        # Configurar velocidade
-        rate = engine.getProperty('rate')
-        engine.setProperty('rate', int(rate * speed))
-        
-        # Configurar voz
-        voices = engine.getProperty('voices')
-        if voices:
-            for voice_obj in voices:
-                if 'brazil' in voice_obj.name.lower() or 'portuguese' in voice_obj.name.lower():
-                    engine.setProperty('voice', voice_obj.id)
-                    break
-        
-        engine.save_to_file(text, file_path)
-        engine.runAndWait()
-        
-        return os.path.exists(file_path)
-        
-    except Exception as e:
-        logger.error(f"Erro pyttsx3: {str(e)}")
         return False
 
 @app.route('/')
@@ -273,12 +155,10 @@ def status():
     """Status da API"""
     return jsonify({
         'status': 'online',
-        'tts_engine': TTS_ENGINE,
-        'tts_type': TTS_TYPE,
+        'tts_engine': 'gtts',
+        'tts_type': 'online',
         'available_engines': {
-            'azure': AZURE_AVAILABLE,
-            'gtts': GTTS_AVAILABLE if 'GTTS_AVAILABLE' in globals() else False,
-            'pyttsx3': PYTTSX3_AVAILABLE if 'PYTTSX3_AVAILABLE' in globals() else False
+            'gtts': True
         },
         'file_support': {
             'pdf': PDF_AVAILABLE,
@@ -286,7 +166,7 @@ def status():
             'excel': EXCEL_AVAILABLE,
             'pptx': PPTX_AVAILABLE
         },
-        'voices': VOICES_CONFIG.get(TTS_ENGINE, {}),
+        'voices': VOICES_CONFIG.get('gtts', {}),
         'timestamp': datetime.now().isoformat(),
         'active_files': len(AUDIO_FILES)
     })
@@ -295,8 +175,8 @@ def status():
 def get_voices():
     """Obter vozes disponíveis"""
     return jsonify({
-        'engine': TTS_ENGINE,
-        'voices': VOICES_CONFIG.get(TTS_ENGINE, {})
+        'engine': 'gtts',
+        'voices': VOICES_CONFIG.get('gtts', {})
     })
 
 @app.route('/convert', methods=['POST'])
@@ -331,17 +211,17 @@ def convert():
         # Obter parâmetros
         if request.is_json:
             data = request.get_json()
-            voice = data.get('voice', list(VOICES_CONFIG.get(TTS_ENGINE, {}).keys())[0])
+            voice = data.get('voice', list(VOICES_CONFIG.get('gtts', {}).keys())[0])
             speed = float(data.get('speed', 1.0))
         else:
-            voice = request.form.get('voice', list(VOICES_CONFIG.get(TTS_ENGINE, {}).keys())[0])
+            voice = request.form.get('voice', list(VOICES_CONFIG.get('gtts', {}).keys())[0])
             speed = float(request.form.get('speed', 1.0))
         
         logger.info(f"Convertendo {len(text)} caracteres com voz {voice}")
         
         # Gerar arquivo de áudio
         file_id = str(uuid.uuid4())
-        audio_filename = f"audiobook_{file_id}.{'mp3' if TTS_ENGINE == 'gtts' else 'wav'}"
+        audio_filename = f"audiobook_{file_id}.mp3"
         audio_path = os.path.join(TEMP_DIR, audio_filename)
         
         # Converter texto para fala
@@ -358,7 +238,7 @@ def convert():
             'text_length': len(text),
             'voice': voice,
             'speed': speed,
-            'engine': TTS_ENGINE
+            'engine': 'gtts'
         }
         
         return jsonify({
@@ -369,7 +249,7 @@ def convert():
             'file_size': os.path.getsize(audio_path),
             'text_length': len(text),
             'voice': voice,
-            'engine': TTS_ENGINE
+            'engine': 'gtts'
         })
         
     except Exception as e:
@@ -391,7 +271,7 @@ def download_audio(file_id):
             file_info['path'],
             as_attachment=True,
             download_name=file_info['filename'],
-            mimetype='audio/mpeg' if file_info['filename'].endswith('.mp3') else 'audio/wav'
+            mimetype='audio/mpeg'
         )
     except Exception as e:
         return jsonify({'error': f'Erro no download: {str(e)}'}), 500
@@ -412,13 +292,11 @@ def cleanup():
     return jsonify({'cleaned_files': cleaned})
 
 if __name__ == '__main__':
-    print("🎧 Conversor de Texto para Audiobook - Versão Completa")
+    print("🎧 Conversor de Texto para Audiobook - Versão Otimizada com gTTS")
     print(f"📁 Diretório temporário: {TEMP_DIR}")
-    print(f"🎤 Engine TTS: {TTS_ENGINE}")
+    print(f"🎤 Engine TTS: gTTS")
     print(f"📚 Suporte a arquivos: TXT, PDF{'✓' if PDF_AVAILABLE else '✗'}, DOCX{'✓' if DOCX_AVAILABLE else '✗'}, XLSX{'✓' if EXCEL_AVAILABLE else '✗'}, PPTX{'✓' if PPTX_AVAILABLE else '✗'}")
-    print("\n📋 Para instalar todas as dependências:")
-    print("pip install flask flask-cors PyPDF2 python-docx openpyxl python-pptx")
-    print("pip install pyttsx3 gTTS pygame")  # TTS engines
-    print("pip install azure-cognitiveservices-speech")  # Azure (opcional)
+    print("\n📋 Para instalar as dependências:")
+    print("pip install flask flask-cors PyPDF2 python-docx openpyxl python-pptx gtts pydub")
     
     app.run(host='0.0.0.0', port=5000, debug=True)
