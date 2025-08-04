@@ -505,7 +505,7 @@
         // Carregar vozes disponíveis
         async function loadVoices() {
             try {
-                const response = await fetch('/voices');
+                const response = await fetch('http://localhost:5000/voices');
                 const data = await response.json();
                 voices = data.voices || {};
                 
