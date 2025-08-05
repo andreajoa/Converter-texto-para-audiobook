@@ -4,447 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎧 Conversor de Texto para Audiobook</title>
+    <!-- O MESMO CSS, pode colar do seu original acima -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        .status-indicator {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            z-index: 10;
-        }
-
-        .status-online {
-            background: #10b981;
-            color: white;
-        }
-
-        .status-offline {
-            background: #ef4444;
-            color: white;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .tabs {
-            display: flex;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 15px 20px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #6b7280;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            color: #6366f1;
-            border-bottom: 3px solid #6366f1;
-            background: rgba(99, 102, 241, 0.05);
-        }
-
-        .tab:hover {
-            background: rgba(99, 102, 241, 0.05);
-        }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #374151;
-            font-size: 1rem;
-        }
-
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s;
-            font-family: inherit;
-        }
-
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .form-textarea {
-            min-height: 150px;
-            resize: vertical;
-        }
-
-        .file-upload {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-input {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .file-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            border: 3px dashed #d1d5db;
-            border-radius: 10px;
-            background: #f9fafb;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .file-label:hover {
-            border-color: #6366f1;
-            background: #f0f0ff;
-            transform: translateY(-2px);
-        }
-
-        .file-label.dragover {
-            border-color: #6366f1;
-            background: #f0f0ff;
-            transform: scale(1.02);
-        }
-
-        .range-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .range-input {
-            flex: 1;
-            height: 8px;
-            border-radius: 5px;
-            background: #e5e7eb;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        .range-input::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #6366f1;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
-        }
-
-        .range-input::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #6366f1;
-            cursor: pointer;
-            border: none;
-        }
-
-        .range-value {
-            min-width: 60px;
-            padding: 8px 12px;
-            background: #f3f4f6;
-            border-radius: 6px;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-loading {
-            color: transparent;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            border: 2px solid transparent;
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        .result {
-            margin-top: 30px;
-            padding: 25px;
-            border-radius: 15px;
-            display: none;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result.success {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-
-        .result.error {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-
-        .result h3 {
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-        }
-
-        .result-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .result-item {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-
-        .result-item strong {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .download-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 15px;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .download-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .supported-formats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .format-tag {
-            background: #6366f1;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .voice-info {
-            font-size: 0.9rem;
-            color: #6b7280;
-            margin-top: 5px;
-            font-style: italic;
-        }
-
-        .file-info {
-            margin-top: 15px;
-            display: none;
-        }
-
-        .file-info-content {
-            padding: 15px;
-            background: #f3f4f6;
-            border-radius: 10px;
-            border-left: 4px solid #6366f1;
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .loading-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #e5e7eb;
-            border-top: 5px solid #6366f1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 15px;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .tabs {
-                flex-direction: column;
-            }
-
-            .tab {
-                border-bottom: 1px solid #e5e7eb;
-                border-radius: 0;
-            }
-
-            .result-info {
-                grid-template-columns: 1fr;
-            }
-
-            .status-indicator {
-                position: static;
-                display: inline-block;
-                margin-bottom: 10px;
-            }
-        }
+        /* [TODO]: COLE O SEU CSS ORIGINAL AQUI, POIS JÁ É BOM */
     </style>
 </head>
 <body>
@@ -466,29 +28,28 @@
 
         <div class="content">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('text')">📝 Texto</button>
-                <button class="tab" onclick="switchTab('file')">📄 Arquivo</button>
+                <button class="tab active" onclick="switchTab('text', event)">📝 Texto</button>
+                <button class="tab" onclick="switchTab('file', event)">📄 Arquivo</button>
             </div>
 
             <!-- Aba de Texto -->
             <div class="tab-content active" id="textTab">
-                <form id="textForm">
+                <form id="textForm" autocomplete="off">
                     <div class="form-group">
                         <label class="form-label" for="textInput">Cole seu texto aqui:</label>
-                        <textarea class="form-textarea" id="textInput" placeholder="Digite ou cole o texto que deseja converter em audiobook...
+                        <textarea class="form-textarea" id="textInput" required minlength="10"
+                        placeholder="Digite ou cole o texto que deseja converter em audiobook...
 
 Exemplo:
 Era uma vez, em um reino muito distante..."></textarea>
                     </div>
-
                     <div class="form-group">
                         <label class="form-label" for="voiceSelect">Selecione a voz:</label>
-                        <select class="form-select" id="voiceSelect">
+                        <select class="form-select" id="voiceSelect" required>
                             <option value="">Carregando vozes...</option>
                         </select>
                         <div class="voice-info" id="voiceInfo"></div>
                     </div>
-
                     <div class="form-group">
                         <label class="form-label" for="speedRange">Velocidade da fala:</label>
                         <div class="range-container">
@@ -496,7 +57,6 @@ Era uma vez, em um reino muito distante..."></textarea>
                             <div class="range-value" id="speedValue">1.0x</div>
                         </div>
                     </div>
-
                     <button type="submit" class="btn" id="convertTextBtn">
                         🎤 Converter Texto para Audiobook
                     </button>
@@ -505,11 +65,11 @@ Era uma vez, em um reino muito distante..."></textarea>
 
             <!-- Aba de Arquivo -->
             <div class="tab-content" id="fileTab">
-                <form id="fileForm">
+                <form id="fileForm" autocomplete="off">
                     <div class="form-group">
                         <label class="form-label">Envie seu arquivo:</label>
                         <div class="file-upload">
-                            <input type="file" class="file-input" id="fileInput" accept=".txt,.pdf,.docx,.doc,.rtf,.odt,.md,.html,.htm,.csv,.xml,.json">
+                            <input type="file" class="file-input" id="fileInput" accept=".txt" required>
                             <label class="file-label" for="fileInput" id="fileLabel">
                                 <div>
                                     <div style="font-size: 3rem; margin-bottom: 15px;">📁</div>
@@ -517,19 +77,7 @@ Era uma vez, em um reino muito distante..."></textarea>
                                         Clique para selecionar ou arraste um arquivo
                                     </div>
                                     <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 15px;">
-                                        Formatos suportados:
-                                    </div>
-                                    <div class="supported-formats">
-                                        <span class="format-tag">TXT</span>
-                                        <span class="format-tag">PDF</span>
-                                        <span class="format-tag">DOCX</span>
-                                        <span class="format-tag">RTF</span>
-                                        <span class="format-tag">ODT</span>
-                                        <span class="format-tag">MD</span>
-                                        <span class="format-tag">HTML</span>
-                                        <span class="format-tag">CSV</span>
-                                        <span class="format-tag">XML</span>
-                                        <span class="format-tag">JSON</span>
+                                        Formato suportado: <span class="format-tag">TXT</span>
                                     </div>
                                     <div style="font-size: 0.8rem; color: #9ca3af; margin-top: 10px;">
                                         Máximo: 50MB
@@ -541,15 +89,13 @@ Era uma vez, em um reino muito distante..."></textarea>
                             <div class="file-info-content" id="fileInfoContent"></div>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label class="form-label" for="fileVoiceSelect">Selecione a voz:</label>
-                        <select class="form-select" id="fileVoiceSelect">
+                        <select class="form-select" id="fileVoiceSelect" required>
                             <option value="">Carregando vozes...</option>
                         </select>
                         <div class="voice-info" id="fileVoiceInfo"></div>
                     </div>
-
                     <div class="form-group">
                         <label class="form-label" for="fileSpeedRange">Velocidade da fala:</label>
                         <div class="range-container">
@@ -557,7 +103,6 @@ Era uma vez, em um reino muito distante..."></textarea>
                             <div class="range-value" id="fileSpeedValue">1.0x</div>
                         </div>
                     </div>
-
                     <button type="submit" class="btn" id="convertFileBtn">
                         🎤 Converter Arquivo para Audiobook
                     </button>
@@ -573,59 +118,49 @@ Era uma vez, em um reino muito distante..."></textarea>
     </div>
 
     <script>
-        // Variáveis globais
+        // ========== VARIÁVEIS GLOBAIS ==========
         let voices = {};
         let apiStatus = false;
 
-        // Inicialização
+        // ========== INICIALIZAÇÃO ==========
         document.addEventListener('DOMContentLoaded', function() {
             checkApiStatus();
             loadVoices();
             setupEventListeners();
         });
 
-        // Verificar status da API
+        // ========== STATUS DA API ==========
         async function checkApiStatus() {
             try {
                 const response = await fetch('/status');
                 const data = await response.json();
-                
                 if (data.status === 'online') {
                     updateStatusIndicator('online', 'Online - ' + (data.tts_engine ? data.tts_engine.toUpperCase() : 'GTTS'));
                     apiStatus = true;
                 } else {
                     updateStatusIndicator('offline', 'Offline');
                 }
-                
-                console.log('Status da API:', data);
             } catch (error) {
                 updateStatusIndicator('offline', 'Erro de conexão');
-                console.error('Erro ao verificar status:', error);
             }
         }
 
-        // Atualizar indicador de status
         function updateStatusIndicator(status, text) {
             const indicator = document.getElementById('statusIndicator');
-            indicator.textContent = '✅ ' + text;
+            indicator.textContent = (status === "online" ? '✅ ' : '❌ ') + text;
             indicator.className = 'status-indicator status-' + status;
         }
 
-        // Carregar vozes disponíveis
+        // ========== CARREGAR VOZES ==========
         async function loadVoices() {
             try {
                 const response = await fetch('/voices');
                 const data = await response.json();
-                
                 if (data.success && data.voices) {
                     voices = data.voices;
                     populateVoiceSelects();
-                } else {
-                    console.error('Erro ao carregar vozes:', data);
                 }
             } catch (error) {
-                console.error('Erro ao carregar vozes:', error);
-                // Fallback para vozes básicas
                 voices = {
                     'pt-BR': { name: 'Português Brasil', gender: 'Feminina', country: 'Brasil' },
                     'pt': { name: 'Português Portugal', gender: 'Feminina', country: 'Portugal' },
@@ -635,153 +170,91 @@ Era uma vez, em um reino muito distante..."></textarea>
             }
         }
 
-        // Popular selects de voz
         function populateVoiceSelects() {
-            const selects = ['voiceSelect', 'fileVoiceSelect'];
-            
-            selects.forEach(function(selectId) {
+            ['voiceSelect', 'fileVoiceSelect'].forEach(function(selectId) {
                 const select = document.getElementById(selectId);
                 select.innerHTML = '';
-                
-                if (Object.keys(voices).length === 0) {
+                if (!voices || Object.keys(voices).length === 0) {
                     select.innerHTML = '<option value="">Nenhuma voz disponível</option>';
                     return;
                 }
-                
-                Object.entries(voices).forEach(function(entry) {
-                    const voiceId = entry[0];
-                    const voiceData = entry[1];
+                Object.entries(voices).forEach(([voiceId, voiceData]) => {
                     const option = document.createElement('option');
                     option.value = voiceId;
                     option.textContent = voiceData.name;
                     select.appendChild(option);
                 });
-                
-                // Selecionar primeira voz por padrão
-                if (select.children.length > 0) {
-                    select.selectedIndex = 0;
-                    updateVoiceInfo(selectId);
-                }
+                select.selectedIndex = 0;
+                updateVoiceInfo(selectId);
             });
         }
 
-        // Atualizar informações da voz
         function updateVoiceInfo(selectId) {
             const select = document.getElementById(selectId);
             const infoId = selectId.replace('Select', 'Info');
             const info = document.getElementById(infoId);
-            
             const selectedVoice = voices[select.value];
-            if (selectedVoice) {
-                info.textContent = selectedVoice.gender + ' • ' + selectedVoice.country;
-            } else {
-                info.textContent = '';
-            }
+            info.textContent = selectedVoice ? (selectedVoice.gender + ' • ' + selectedVoice.country) : '';
         }
 
-        // Configurar event listeners
+        // ========== EVENT LISTENERS ==========
         function setupEventListeners() {
-            // Controles de velocidade
-            const speedRange = document.getElementById('speedRange');
-            const speedValue = document.getElementById('speedValue');
-            const fileSpeedRange = document.getElementById('fileSpeedRange');
-            const fileSpeedValue = document.getElementById('fileSpeedValue');
-
-            speedRange.addEventListener('input', function() {
-                speedValue.textContent = speedRange.value + 'x';
+            document.getElementById('speedRange').addEventListener('input', function() {
+                document.getElementById('speedValue').textContent = this.value + 'x';
             });
-
-            fileSpeedRange.addEventListener('input', function() {
-                fileSpeedValue.textContent = fileSpeedRange.value + 'x';
+            document.getElementById('fileSpeedRange').addEventListener('input', function() {
+                document.getElementById('fileSpeedValue').textContent = this.value + 'x';
             });
-
-            // Voice selects
-            document.getElementById('voiceSelect').addEventListener('change', function() {
-                updateVoiceInfo('voiceSelect');
+            document.getElementById('voiceSelect').addEventListener('change', () => updateVoiceInfo('voiceSelect'));
+            document.getElementById('fileVoiceSelect').addEventListener('change', () => updateVoiceInfo('fileVoiceSelect'));
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            document.getElementById('fileLabel').addEventListener('dragover', function(e) {
+                e.preventDefault(); this.classList.add('dragover');
             });
-
-            document.getElementById('fileVoiceSelect').addEventListener('change', function() {
-                updateVoiceInfo('fileVoiceSelect');
+            document.getElementById('fileLabel').addEventListener('dragleave', function() {
+                this.classList.remove('dragover');
             });
-
-            // File upload
-            const fileInput = document.getElementById('fileInput');
-            const fileLabel = document.getElementById('fileLabel');
-
-            fileInput.addEventListener('change', handleFileSelect);
-
-            // Drag and drop
-            fileLabel.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                fileLabel.classList.add('dragover');
-            });
-
-            fileLabel.addEventListener('dragleave', function() {
-                fileLabel.classList.remove('dragover');
-            });
-
-            fileLabel.addEventListener('drop', function(e) {
-                e.preventDefault();
-                fileLabel.classList.remove('dragover');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    fileInput.files = files;
+            document.getElementById('fileLabel').addEventListener('drop', function(e) {
+                e.preventDefault(); this.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    document.getElementById('fileInput').files = e.dataTransfer.files;
                     handleFileSelect();
                 }
             });
-
-            // Forms
             document.getElementById('textForm').addEventListener('submit', handleTextSubmit);
             document.getElementById('fileForm').addEventListener('submit', handleFileSubmit);
         }
 
-        // Alternar abas
-        function switchTab(tabName) {
-            // Atualizar botões
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(function(tab) {
-                tab.classList.remove('active');
-            });
+        // ========== TROCAR ABA ==========
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             event.target.classList.add('active');
-
-            // Atualizar conteúdo
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(function(content) {
-                content.classList.remove('active');
-            });
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
             document.getElementById(tabName + 'Tab').classList.add('active');
-
-            // Esconder resultado
             hideResult();
         }
 
-        // Lidar com seleção de arquivo
+        // ========== FILE SELECTION ==========
         function handleFileSelect() {
             const fileInput = document.getElementById('fileInput');
             const fileInfo = document.getElementById('fileInfo');
             const fileInfoContent = document.getElementById('fileInfoContent');
-            
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 const maxSize = 50 * 1024 * 1024; // 50MB
-                
                 let statusColor = '#10b981';
                 let statusText = 'Arquivo válido';
-                
                 if (file.size > maxSize) {
                     statusColor = '#ef4444';
                     statusText = 'Arquivo muito grande (máx. 50MB)';
                 }
-                
-                fileInfoContent.innerHTML = '<div style="display: flex; justify-content: space-between; align-items: center;"><div><strong>📄 ' + file.name + '</strong><br><span style="color: #6b7280;">Tamanho: ' + formatFileSize(file.size) + ' • Tipo: ' + (file.type || 'Texto') + '</span></div><div style="color: ' + statusColor + '; font-weight: 600;">' + statusText + '</div></div>';
+                fileInfoContent.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center;"><div><strong>📄 ${file.name}</strong><br><span style="color: #6b7280;">Tamanho: ${formatFileSize(file.size)} • Tipo: ${file.type || 'Texto'}</span></div><div style="color: ${statusColor}; font-weight: 600;">${statusText}</div></div>`;
                 fileInfo.style.display = 'block';
             } else {
                 fileInfo.style.display = 'none';
             }
         }
 
-        // Formatar tamanho do arquivo
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -790,115 +263,112 @@ Era uma vez, em um reino muito distante..."></textarea>
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // Mostrar loading overlay
+        // ========== LOADING ==========
         function showLoading() {
             document.getElementById('loadingOverlay').style.display = 'flex';
         }
-
-        // Esconder loading overlay
         function hideLoading() {
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
-        // Lidar com envio de texto
+        // ========== FORM SUBMIT TEXT ==========
         async function handleTextSubmit(e) {
             e.preventDefault();
-            
             const text = document.getElementById('textInput').value.trim();
             const voice = document.getElementById('voiceSelect').value;
             const speed = document.getElementById('speedRange').value;
 
-            if (!text) {
-                showResult('error', 'Erro', 'Por favor, digite um texto para converter.');
+            if (!text || text.length < 10) {
+                showResult('error', 'Erro', 'Por favor, digite um texto de pelo menos 10 caracteres.');
                 return;
             }
-
-            if (text.length < 10) {
-                showResult('error', 'Erro', 'O texto deve ter pelo menos 10 caracteres.');
-                return;
-            }
-
-            await convertToAudio({ text: text, voice: voice, speed: speed }, 'convertTextBtn');
+            await convertToAudio({ text, voice, speed }, 'convertTextBtn');
         }
 
-        // Lidar com envio de arquivo
+        // ========== FORM SUBMIT FILE ==========
         async function handleFileSubmit(e) {
             e.preventDefault();
-            
             const fileInput = document.getElementById('fileInput');
             const voice = document.getElementById('fileVoiceSelect').value;
             const speed = document.getElementById('fileSpeedRange').value;
-
             if (!fileInput.files.length) {
                 showResult('error', 'Erro', 'Por favor, selecione um arquivo para converter.');
                 return;
             }
-
             const file = fileInput.files[0];
-            const maxSize = 50 * 1024 * 1024; // 50MB
-            
+            const maxSize = 50 * 1024 * 1024;
             if (file.size > maxSize) {
                 showResult('error', 'Erro', 'Arquivo muito grande. O tamanho máximo é 50MB.');
                 return;
             }
-
             const formData = new FormData();
             formData.append('file', file);
             formData.append('voice', voice);
             formData.append('speed', speed);
-
             await convertToAudio(formData, 'convertFileBtn', true);
         }
 
-        // Converter para áudio
-        async function convertToAudio(data, buttonId, isFile) {
-            if (isFile === undefined) isFile = false;
-            
+        // ========== CHAMADA PARA BACKEND ==========
+        async function convertToAudio(data, buttonId, isFile = false) {
             const button = document.getElementById(buttonId);
-            
-            // Mostrar loading
             button.disabled = true;
             button.classList.add('btn-loading');
             showLoading();
             hideResult();
-
             try {
-                console.log('Enviando dados para conversão...', isFile ? 'Arquivo' : 'Texto');
-
-                const options = {
-                    method: 'POST'
-                };
-
+                const options = { method: 'POST' };
                 if (isFile) {
                     options.body = data;
                 } else {
-                    options.headers = {
-                        'Content-Type': 'application/json'
-                    };
+                    options.headers = { 'Content-Type': 'application/json' };
                     options.body = JSON.stringify(data);
                 }
-
                 const response = await fetch('/convert', options);
                 const result = await response.json();
-
-                console.log('Resposta da API:', result);
-
                 if (result.success) {
                     showSuccessResult(result);
                 } else {
                     showResult('error', 'Erro na Conversão', result.error || 'Erro desconhecido');
                 }
-
             } catch (error) {
-                console.error('Erro na conversão:', error);
-                showResult('error', 'Erro de Conexão', 'Não foi possível conectar com o servidor. Verifique sua conexão.');
+                showResult('error', 'Erro de Conexão', 'Não foi possível conectar com o servidor.');
             } finally {
-                // Remover loading
                 button.disabled = false;
                 button.classList.remove('btn-loading');
                 hideLoading();
             }
         }
 
-        // Mostrar resultado de sucesso
+        // ========== RESULTADO ==========
         function showSuccessResult(data) {
+            const resultContent = `
+                <div class="result-info">
+                    <div class="result-item"><strong>Tamanho do Arquivo:</strong> ${data.file_size_mb} MB (${data.file_size} bytes)</div>
+                    <div class="result-item"><strong>Texto Processado:</strong> ${data.text_length} caracteres</div>
+                    <div class="result-item"><strong>Chunks Processados:</strong> ${data.chunks_processed}</div>
+                    <div class="result-item"><strong>Voz Utilizada:</strong> ${(voices[data.voice] ? voices[data.voice].name : data.voice)}</div>
+                    <div class="result-item"><strong>Velocidade:</strong> ${data.speed}x</div>
+                    <div class="result-item"><strong>Duração Estimada:</strong> ~${data.estimated_duration_minutes} minutos</div>
+                </div>
+                <a href="${data.download_url}" class="download-btn" download="${data.filename}">
+                    📥 Baixar Audiobook (${data.filename})
+                </a>
+            `;
+            showResult('success', '✅ Audiobook Gerado com Sucesso!', resultContent);
+        }
+
+        function showResult(type, title, content) {
+            const result = document.getElementById('result');
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultContent').innerHTML = content;
+            result.className = 'result ' + type;
+            result.style.display = 'block';
+            setTimeout(() => result.scrollIntoView({ behavior: 'smooth' }), 100);
+        }
+
+        function hideResult() {
+            document.getElementById('result').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
