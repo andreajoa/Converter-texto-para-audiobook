@@ -7,33 +7,6 @@ from datetime import datetime
 import logging
 from werkzeug.utils import secure_filename
 from gtts import gTTS
-from pydub import AudioSegment
-
-# Bibliotecas para leitura de diferentes formatos
-try:
-    import PyPDF2
-    PDF_AVAILABLE = True
-except ImportError:
-    PDF_AVAILABLE = False
-
-try:
-    from docx import Document
-    DOCX_AVAILABLE = True
-except ImportError:
-    DOCX_AVAILABLE = False
-
-try:
-    import openpyxl
-    from openpyxl import load_workbook
-    EXCEL_AVAILABLE = True
-except ImportError:
-    EXCEL_AVAILABLE = False
-
-try:
-    import pptx
-    PPTX_AVAILABLE = True
-except ImportError:
-    PPTX_AVAILABLE = False
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -48,8 +21,8 @@ AUDIO_FILES = {}
 UPLOAD_FOLDER = os.path.join(TEMP_DIR, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Configurações de arquivo
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'rtf'}
+# Arquivos suportados
+ALLOWED_EXTENSIONS = {'txt'}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
 # Vozes disponíveis para gTTS (focando em pt-BR)
@@ -63,95 +36,6 @@ VOICES_CONFIG = {
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def extract_text_from_file(file_path, filename):
-    """Extrair texto de diferentes tipos de arquivo"""
-    text = ""
-    file_extension = filename.lower().split('.')[-1]
-    
-    try:
-        if file_extension == 'txt':
-            with open(file_path, 'r', encoding='utf-8') as file:
-                text = file.read()
-        
-        elif file_extension == 'pdf' and PDF_AVAILABLE:
-            with open(file_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                for page in pdf_reader.pages:
-                    t = page.extract_text()
-                    if t:
-                        text += t + "\n"
-        
-        elif file_extension in ['docx', 'doc'] and DOCX_AVAILABLE:
-            doc = Document(file_path)
-            for paragraph in doc.paragraphs:
-                text += paragraph.text + "\n"
-        
-        elif file_extension in ['xlsx', 'xls'] and EXCEL_AVAILABLE:
-            workbook = load_workbook(file_path)
-            for sheet_name in workbook.sheetnames:
-                sheet = workbook[sheet_name]
-                for row in sheet.iter_rows(values_only=True):
-                    text += " ".join([str(cell) for cell in row if cell is not None]) + "\n"
-        
-        elif file_extension in ['pptx', 'ppt'] and PPTX_AVAILABLE:
-            presentation = pptx.Presentation(file_path)
-            for slide in presentation.slides:
-                for shape in slide.shapes:
-                    if hasattr(shape, "text"):
-                        text += shape.text + "\n"
-        
-        else:
-            # Tentar ler como texto simples
-            try:
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    text = file.read()
-            except:
-                with open(file_path, 'r', encoding='latin-1') as file:
-                    text = file.read()
-    
-    except Exception as e:
-        logger.error(f"Erro ao extrair texto de {filename}: {str(e)}")
-        raise Exception(f"Não foi possível extrair texto do arquivo: {str(e)}")
-    
-    return text.strip()
-
-def convert_text_to_speech(text, voice, speed, file_path):
-    """Converter texto para fala usando gTTS, com suporte a textos longos"""
-    try:
-        lang = voice if voice in ['pt-BR', 'pt'] else 'pt-BR'
-        # Dividir o texto em blocos de 4500 caracteres para evitar o limite do gTTS
-        text_parts = [text[i:i+4500] for i in range(0, len(text), 4500)]
-        
-        # Gerar um arquivo de áudio para cada parte do texto
-        audio_parts = []
-        for i, part in enumerate(text_parts):
-            part_file = os.path.join(TEMP_DIR, f"part_{i}.mp3")
-            tts = gTTS(text=part, lang=lang, slow=(speed < 0.8))
-            tts.save(part_file)
-            audio_parts.append(AudioSegment.from_mp3(part_file))
-        
-        # Concatenar os arquivos de áudio
-        combined_audio = audio_parts[0]
-        for audio in audio_parts[1:]:
-            combined_audio += audio
-        
-        # Salvar o arquivo de áudio final
-        combined_audio.export(file_path, format="mp3")
-        
-        # Limpar os arquivos de áudio parciais
-        for file in os.listdir(TEMP_DIR):
-            if file.startswith("part_") and file.endswith(".mp3"):
-                try:
-                    os.remove(os.path.join(TEMP_DIR, file))
-                except:
-                    pass
-
-        return True
-        
-    except Exception as e:
-        logger.error(f"Erro gTTS: {str(e)}")
-        return False
-
 @app.route('/')
 def home():
     """Página inicial"""
@@ -164,15 +48,8 @@ def status():
         'status': 'online',
         'tts_engine': 'gtts',
         'tts_type': 'online',
-        'available_engines': {
-            'gtts': True
-        },
-        'file_support': {
-            'pdf': PDF_AVAILABLE,
-            'docx': DOCX_AVAILABLE,
-            'excel': EXCEL_AVAILABLE,
-            'pptx': PPTX_AVAILABLE
-        },
+        'available_engines': {'gtts': True},
+        'file_support': {'txt': True},
         'voices': VOICES_CONFIG.get('gtts', {}),
         'timestamp': datetime.now().isoformat(),
         'active_files': len(AUDIO_FILES)
@@ -192,19 +69,18 @@ def convert():
     try:
         text = ""
         
-        # Verificar se é upload de arquivo
+        # Upload de arquivo txt
         if 'file' in request.files:
             file = request.files['file']
             if file and file.filename and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(UPLOAD_FOLDER, filename)
                 file.save(file_path)
-                
-                # Extrair texto do arquivo
-                text = extract_text_from_file(file_path, filename)
-                os.remove(file_path)  # Limpar arquivo temporário
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    text = f.read()
+                os.remove(file_path)
         
-        # Se não há arquivo, tentar obter texto do JSON ou form
+        # Se não há arquivo, tenta pegar do JSON ou form
         if not text:
             if request.is_json:
                 data = request.get_json()
@@ -215,29 +91,36 @@ def convert():
         if not text:
             return jsonify({'error': 'Texto ou arquivo não fornecido'}), 400
         
-        # Obter parâmetros
+        # Parâmetros
         if request.is_json:
             data = request.get_json()
-            voice = data.get('voice', list(VOICES_CONFIG.get('gtts', {}).keys())[0])
+            voice = data.get('voice', 'pt-BR')
             speed = float(data.get('speed', 1.0))
         else:
-            voice = request.form.get('voice', list(VOICES_CONFIG.get('gtts', {}).keys())[0])
+            voice = request.form.get('voice', 'pt-BR')
             speed = float(request.form.get('speed', 1.0))
-        
+
         logger.info(f"Convertendo {len(text)} caracteres com voz {voice}")
         
-        # Gerar arquivo de áudio
+        # Gerar arquivo de áudio (direto)
         file_id = str(uuid.uuid4())
         audio_filename = f"audiobook_{file_id}.mp3"
         audio_path = os.path.join(TEMP_DIR, audio_filename)
+
+        # gTTS só aceita até ~5000 caracteres por vez, então corta se necessário
+        max_gtts_chars = 4900
+        chunks = [text[i:i+max_gtts_chars] for i in range(0, len(text), max_gtts_chars)]
         
-        # Converter texto para fala
-        success = convert_text_to_speech(text, voice, speed, audio_path)
-        
-        if not success or not os.path.exists(audio_path):
-            return jsonify({'error': 'Falha ao gerar áudio'}), 500
-        
-        # Armazenar informações
+        # Gera áudio por partes e salva como um único arquivo final
+        with open(audio_path, "wb") as outfile:
+            for part in chunks:
+                tts = gTTS(text=part, lang=voice if voice in ["pt-BR", "pt"] else "pt-BR", slow=(speed < 0.8))
+                temp_mp3 = os.path.join(TEMP_DIR, f"temp_{uuid.uuid4().hex}.mp3")
+                tts.save(temp_mp3)
+                with open(temp_mp3, "rb") as fin:
+                    outfile.write(fin.read())
+                os.remove(temp_mp3)
+
         AUDIO_FILES[file_id] = {
             'filename': audio_filename,
             'path': audio_path,
@@ -268,11 +151,9 @@ def download_audio(file_id):
     """Download do arquivo de áudio"""
     if file_id not in AUDIO_FILES:
         return jsonify({'error': 'Arquivo não encontrado'}), 404
-    
     file_info = AUDIO_FILES[file_id]
     if not os.path.exists(file_info['path']):
         return jsonify({'error': 'Arquivo não existe'}), 404
-    
     try:
         return send_file(
             file_info['path'],
@@ -295,16 +176,12 @@ def cleanup():
             del AUDIO_FILES[file_id]
         except Exception as e:
             logger.error(f"Erro limpando {file_id}: {str(e)}")
-    
     return jsonify({'cleaned_files': cleaned})
 
 if __name__ == '__main__':
-    print("🎧 Conversor de Texto para Audiobook - Versão Otimizada com gTTS")
+    print("🎧 Conversor de Texto para Audiobook - Versão Simplificada com gTTS")
     print(f"📁 Diretório temporário: {TEMP_DIR}")
     print(f"🎤 Engine TTS: gTTS")
-    print(f"📚 Suporte a arquivos: TXT, PDF{'✓' if PDF_AVAILABLE else '✗'}, DOCX{'✓' if DOCX_AVAILABLE else '✗'}, XLSX{'✓' if EXCEL_AVAILABLE else '✗'}, PPTX{'✓' if PPTX_AVAILABLE else '✗'}")
-    print("\n📋 Para instalar as dependências:")
-    print("pip install flask flask-cors PyPDF2 python-docx openpyxl python-pptx gtts pydub")
-    
+    print("📋 Para instalar as dependências: pip install flask flask-cors gtts")
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
