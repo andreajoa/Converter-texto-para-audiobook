@@ -17,7 +17,10 @@ import xml.etree.ElementTree as ET
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+# Inicializar Flask com template folder correto
+app = Flask(__name__, 
+            template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'),
+            static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static'))
 CORS(app)
 
 # Diretório temporário seguro
@@ -35,16 +38,56 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 # Vozes disponíveis no gTTS
 VOICES = {
-    'pt-BR': 'Português Brasil',
-    'pt': 'Português Portugal',
-    'en': 'English',
-    'es': 'Español',
-    'fr': 'Français',
-    'de': 'Deutsch',
-    'it': 'Italiano',
-    'ja': 'Japanese',
-    'ko': 'Korean',
-    'zh': 'Chinese'
+    'pt-BR': {
+        'name': 'Português Brasil (Feminina)',
+        'gender': 'Feminina',
+        'country': 'Brasil'
+    },
+    'pt': {
+        'name': 'Português Portugal (Feminina)',
+        'gender': 'Feminina', 
+        'country': 'Portugal'
+    },
+    'en': {
+        'name': 'English (Female)',
+        'gender': 'Female',
+        'country': 'United States'
+    },
+    'es': {
+        'name': 'Español (Femenina)',
+        'gender': 'Femenina',
+        'country': 'España'
+    },
+    'fr': {
+        'name': 'Français (Féminin)',
+        'gender': 'Féminin',
+        'country': 'France'
+    },
+    'de': {
+        'name': 'Deutsch (Weiblich)',
+        'gender': 'Weiblich',
+        'country': 'Deutschland'
+    },
+    'it': {
+        'name': 'Italiano (Femminile)',
+        'gender': 'Femminile',
+        'country': 'Italia'
+    },
+    'ja': {
+        'name': '日本語 (女性)',
+        'gender': '女性',
+        'country': '日本'
+    },
+    'ko': {
+        'name': '한국어 (여성)',
+        'gender': '여성',
+        'country': '대한민국'
+    },
+    'zh': {
+        'name': '中文 (女性)',
+        'gender': '女性',
+        'country': '中国'
+    }
 }
 
 def allowed_file(filename):
@@ -150,26 +193,38 @@ def extract_text_from_file(file_path, filename):
         logger.error(f"Erro ao extrair texto de {filename}: {str(e)}")
         raise
 
+# ROTAS DA APLICAÇÃO
+
 @app.route('/')
 def home():
-    return """
-    <h2>🎧 API Conversor de Texto para Audiobook</h2>
-    <p><strong>Formatos suportados:</strong> TXT, PDF, DOCX, ODT, RTF, MD, HTML, CSV, XML, JSON</p>
-    <p><strong>Vozes disponíveis:</strong> Português (BR/PT), English, Español, Français, Deutsch, Italiano, 日本語, 한국어, 中文</p>
-    """
+    """Página principal com interface moderna"""
+    return render_template('index.html')
 
 @app.route('/status')
 def status():
+    """Status da API com informações completas"""
     return jsonify({
         'status': 'online',
+        'tts_engine': 'gtts',
         'voices': VOICES,
         'supported_formats': list(ALLOWED_EXTENSIONS),
         'max_file_size_mb': MAX_FILE_SIZE // (1024 * 1024),
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now().isoformat(),
+        'active_files': len(AUDIO_FILES)
+    })
+
+@app.route('/voices')
+def get_voices():
+    """Endpoint específico para carregar vozes"""
+    return jsonify({
+        'success': True,
+        'voices': VOICES,
+        'count': len(VOICES)
     })
 
 @app.route('/convert', methods=['POST'])
 def convert():
+    """Conversão de texto/arquivo para audiobook"""
     try:
         text = ""
         
@@ -184,6 +239,7 @@ def convert():
                 
                 if file_size > MAX_FILE_SIZE:
                     return jsonify({
+                        'success': False,
                         'error': f'Arquivo muito grande. Máximo: {MAX_FILE_SIZE // (1024 * 1024)}MB'
                     }), 400
                 
@@ -199,7 +255,10 @@ def convert():
                     if os.path.exists(file_path):
                         os.remove(file_path)
             else:
-                return jsonify({'error': 'Arquivo inválido ou formato não suportado'}), 400
+                return jsonify({
+                    'success': False,
+                    'error': 'Arquivo inválido ou formato não suportado'
+                }), 400
         else:
             # Processar texto direto
             if request.is_json:
@@ -209,10 +268,16 @@ def convert():
                 text = request.form.get('text', '').strip()
 
         if not text:
-            return jsonify({'error': 'Nenhum texto encontrado para conversão'}), 400
+            return jsonify({
+                'success': False,
+                'error': 'Nenhum texto encontrado para conversão'
+            }), 400
 
         if len(text) < 10:
-            return jsonify({'error': 'Texto muito curto (mínimo 10 caracteres)'}), 400
+            return jsonify({
+                'success': False,
+                'error': 'Texto muito curto (mínimo 10 caracteres)'
+            }), 400
 
         # Parâmetros de voz
         voice = 'pt-BR'
@@ -304,7 +369,10 @@ def convert():
                     continue
 
         if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
-            return jsonify({'error': 'Falha ao gerar o áudio'}), 500
+            return jsonify({
+                'success': False,
+                'error': 'Falha ao gerar o áudio'
+            }), 500
 
         # Armazenar informações do arquivo
         AUDIO_FILES[file_id] = {
@@ -330,18 +398,22 @@ def convert():
             'file_size_mb': round(file_size / (1024 * 1024), 2),
             'text_length': len(text),
             'chunks_processed': len(chunks),
-            'voice': VOICES.get(voice, voice),
-            'voice_code': voice,
+            'voice': voice,
+            'engine': 'gtts',
             'speed': speed,
-            'estimated_duration_minutes': round(len(text) / 1000, 1)  # Estimativa grosseira
+            'estimated_duration_minutes': round(len(text) / 1000, 1)
         })
 
     except Exception as e:
         logger.error(f"Erro na conversão: {str(e)}")
-        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+        return jsonify({
+            'success': False,
+            'error': f'Erro interno: {str(e)}'
+        }), 500
 
 @app.route('/download/<file_id>')
 def download_audio(file_id):
+    """Download do arquivo de áudio gerado"""
     if file_id not in AUDIO_FILES:
         return jsonify({'error': 'Arquivo não encontrado'}), 404
         
@@ -362,12 +434,14 @@ def download_audio(file_id):
 
 @app.route('/info/<file_id>')
 def file_info(file_id):
+    """Informações detalhadas do arquivo"""
     if file_id not in AUDIO_FILES:
         return jsonify({'error': 'Arquivo não encontrado'}), 404
     
     file_info = AUDIO_FILES[file_id].copy()
     if os.path.exists(file_info['path']):
         file_info['current_size'] = os.path.getsize(file_info['path'])
+        file_info['status'] = 'available'
     else:
         file_info['current_size'] = 0
         file_info['status'] = 'file_missing'
@@ -376,6 +450,7 @@ def file_info(file_id):
 
 @app.route('/cleanup')
 def cleanup():
+    """Limpeza de arquivos temporários"""
     cleaned = 0
     errors = 0
     
@@ -390,24 +465,31 @@ def cleanup():
             errors += 1
     
     return jsonify({
+        'success': True,
         'cleaned_files': cleaned,
         'errors': errors,
         'remaining_files': len(AUDIO_FILES)
     })
 
+# TRATAMENTO DE ERROS
 @app.errorhandler(413)
 def too_large(e):
-    return jsonify({'error': 'Arquivo muito grande'}), 413
+    return jsonify({'success': False, 'error': 'Arquivo muito grande'}), 413
 
 @app.errorhandler(500)
 def internal_error(e):
-    return jsonify({'error': 'Erro interno do servidor'}), 500
+    return jsonify({'success': False, 'error': 'Erro interno do servidor'}), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({'success': False, 'error': 'Endpoint não encontrado'}), 404
 
 if __name__ == '__main__':
     print("🎧 API Conversor de Texto para Audiobook - Versão Completa")
     print(f"📁 Formatos suportados: {', '.join(ALLOWED_EXTENSIONS)}")
     print(f"🗣️ Vozes disponíveis: {len(VOICES)}")
     print(f"📊 Tamanho máximo: {MAX_FILE_SIZE // (1024 * 1024)}MB")
+    print(f"📂 Templates: {app.template_folder}")
     
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port, debug=False)
