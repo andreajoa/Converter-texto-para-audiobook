@@ -1,9 +1,5 @@
 flask
 flask-cors
 gtts
-pydub
 PyPDF2
 python-docx
-openpyxl
-python-pptx
-pyttsx3
