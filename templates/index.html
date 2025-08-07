@@ -324,27 +324,29 @@
         }
 
         async function convertToAudio(text, voice, speed) {
-            // Simulação de conversão - aqui você integraria com seu backend Python
-            return new Promise((resolve, reject) => {
-                // Simular progresso
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += Math.random() * 20;
-                    updateProgress(Math.min(progress, 90));
-                    
-                    if (progress >= 90) {
-                        clearInterval(interval);
-                        updateProgress(100);
-                        
-                        // Simular conclusão após 2 segundos
-                        setTimeout(() => {
-                            // Em um projeto real, você faria uma chamada para seu backend
-                            // Por exemplo: fetch('/convert', { method: 'POST', body: formData })
-                            resolve('audio_resultado.wav');
-                        }, 2000);
-                    }
-                }, 500);
-            });
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: voice,
+                        speed: speed
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.audio_file;
+                } else {
+                    throw new Error(data.error || 'Erro na conversão');
+                }
+            } catch (error) {
+                throw error;
+            }
         }
 
         document.getElementById('converterForm').addEventListener('submit', async function(e) {
@@ -365,22 +367,32 @@
             convertBtn.disabled = true;
             convertBtn.textContent = '🔄 Convertendo...';
             progressContainer.style.display = 'block';
-            updateProgress(0);
+            
+            // Simular progresso
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                updateProgress(Math.min(progress, 90));
+            }, 300);
             
             try {
                 // Chamar função de conversão
                 const audioFile = await convertToAudio(textInput, voice, speed);
                 
+                clearInterval(progressInterval);
+                updateProgress(100);
+                
                 showStatus('Conversão concluída com sucesso!', 'success');
                 
-                // Mostrar player de áudio (simulado)
+                // Mostrar player de áudio
                 const audioPlayer = document.getElementById('audioPlayer');
                 audioPlayer.style.display = 'block';
                 
-                // Em um projeto real, você definiria a URL do arquivo gerado
-                // currentAudioUrl = audioFile;
+                // Por enquanto simulado - futuramente aqui seria a URL real do áudio
+                currentAudioUrl = audioFile;
                 
             } catch (error) {
+                clearInterval(progressInterval);
                 console.error('Erro na conversão:', error);
                 showStatus('Erro durante a conversão. Tente novamente.', 'error');
             } finally {
@@ -393,12 +405,8 @@
 
         function downloadAudio() {
             if (currentAudioUrl) {
-                const a = document.createElement('a');
-                a.href = currentAudioUrl;
-                a.download = 'audiobook.wav';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                // Em um projeto real, aqui faria download do arquivo
+                showStatus('Funcionalidade de download será implementada em breve!', 'success');
             } else {
                 showStatus('Nenhum arquivo de áudio disponível para download.', 'error');
             }
